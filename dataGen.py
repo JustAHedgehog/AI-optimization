@@ -10,13 +10,13 @@ R5 = 640.0       # 固定桿長 (mm)
 angle_samples = np.radians(np.arange(0, 360, 5))  # 每 5 度一筆，共 72 點
 
 # --- 桿件質量與轉動慣量 ---
-def compute_mass_inertia(R):
+def compute_bar_parameter(R):
     w = 100 # mm
     t = 100 # mm
     density = 7850*1e-9 # kg/mm^3
     m = R * w * t * density # m = R * w * t * density
-    Iz_cen = 1/12 * m * (R**2 + t**2) # TODO I = 1/12 * m * (L^2 + t^2)
-    b = 0.3 * R  # TODO 假設質量中心在桿件中點
+    Iz_cen = 1/12 * m * (R**2 + t**2) # I = 1/12 * m * (L^2 + t^2) TODO 坐標系平移
+    b = 0.3 * R  # 假設質量中心在桿件中點 TODO 實際上不可能這樣
     return m, Iz_cen, b
 
 # --- 解機構位置方程式，得到 θ3~θ6 ---
@@ -29,12 +29,14 @@ def solve_angles(R2, R3, R7, R8, θ2):
         eq4 = R5 * np.sin(θ5) - R4 * np.sin(θ4)
         return [eq1, eq2, eq3, eq4]
 
-    x0 = [np.radians(80), np.radians(155), np.radians(110), np.radians(90)]
+    x0 = [np.radians(80), np.radians(155), np.radians(110), np.radians(90)] # 設定每一個參數的初始猜測值以便收斂
+    
     try:
-        result = fsolve(loop_eqs, x0)
-        return result
+        result = fsolve(loop_eqs, x0) # 在x0設定的初始值下，使用 fsolve 解方程組
+        if np.isclose(loop_eqs(result), [0, 0, 0, 0], atol=1e-6).all(): # atol為設定解容許的絕對閾值；.all()判斷np.isclose回傳的布林陣列是否全部都為True
+            return result
     except:
-        return None
+        return None # 若無法收斂，則返回 None
 
 # --- 計算單一姿態的搖撼力矩 ---
 def compute_shaking_moment(R2, R3, R6, R7, R8, θ2):
@@ -43,13 +45,13 @@ def compute_shaking_moment(R2, R3, R6, R7, R8, θ2):
         return None
     θ3, θ4, θ5, θ6 = angles
 
-    m2, I2, b2 = compute_mass_inertia(R2)
-    m3, I3, b3 = compute_mass_inertia(R3)
-    m5, I5, b5 = compute_mass_inertia(R5)
-    m6, I6, b6 = compute_mass_inertia(R6)
+    m2, I2, b2 = compute_bar_parameter(R2)
+    m3, I3, b3 = compute_bar_parameter(R3)
+    m5, I5, b5 = compute_bar_parameter(R5)
+    m6, I6, b6 = compute_bar_parameter(R6)
 
     # 目前簡化為轉動慣量總和（尚未加入 aG）
-    M_shaking = I2 + I3 + I5 + I6 #TODO
+    M_shaking = I2 + I3 + I5 + I6 # TODO 還沒設定好
     return M_shaking
 
 # --- 模擬 θ2 一整圈，回傳最大搖撼力矩 ---

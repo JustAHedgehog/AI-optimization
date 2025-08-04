@@ -53,8 +53,7 @@ b_mat = num2cell(BOMs(:,8)*1e-3);
 phi_mat = num2cell(BOMs(:,9)*rad);
 I_mat = num2cell(BOMs(:,12)*1e-6);
 [m1,m2,m3,m4,m5,m6] = m_mat{:};
-[b1,b2,b3,b4,b5,b6] = b_mat{:};
-assume([b1,b2,b3,b4,b5,b6], 'real');
+[b1,b2,b3,b4,b5,~] = b_mat{:};
 b6 = 0; % 設定第六連桿長度為 0，不使用 BOM 值
 [phi1,phi2,phi3,phi4,phi5,phi6] = phi_mat{:};
 [I1,I2,I3,I4,I5,I6] = I_mat{:};
@@ -167,16 +166,7 @@ FMVal = [F12x F12y F14x F14y F16x F16y F23x F23y F34x F34y F35x F35y F36x F36y F
 %% 主程式
 for i = 1:360
     fprintf("th2 =  %g deg\n",i);
-    %{
-    位置分析是非線性問題，計算耗時，故使用預先計算好的解以提升效率
-    Unk = FP;
-    Unk = subs(Unk,th2,i*rad);
-    Unk = vpa(Unk);
-    guessFP = Inis(ceil(i/90),:);
-    [R1Sol,th3Sol,th4Sol,th5Sol] = vpasolve(Unk,[R1,th3,th4,th5],guessFP);
-    FPSol = [R1Sol;th3Sol;th4Sol;th5Sol];
-    %}
-    FPSol = Inis(i,:).'; % 從Excel讀取R1, th3, th4, th5從初始到結束的每一數值，並使用.'將列向量轉換為行向量(FPSol 結構：[R1; th3; th4; th5] - 4×1向量)
+    FPSol = Inis(i,:).'; % 從Excel讀取R1, th3, th4, th5從初始到結束的每一數值，並使用.'將行向量轉換為列向量 => FPSol 結構：[R1; th3; th4; th5] - 4×1向量)
 
     Unk = FV; 
     Unk = subs(Unk,th2,i*rad); % subs(表達式, 舊變數, 新值) - i代入函數

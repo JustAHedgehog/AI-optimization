@@ -51,7 +51,6 @@ phi_mat = num2cell(BOMs(:,9)*dtr);
 I_mat = num2cell(BOMs(:,12)*1e-6);
 [m1,m2,m3,m4,m5,m6] = m_mat{:};
 [b1,b2,b3,b4,b5,b6] = b_mat{:};
-assume([b1,b2,b3,b4,b5,b6], 'real');
 [phi1,phi2,phi3,phi4,phi5,phi6] = phi_mat{:};
 [I1,I2,I3,I4,I5,I6] = I_mat{:};
 b6 = 0;

@@ -165,7 +165,7 @@ FMVal = [F12x F12y F14x F14y F16x F16y F23x F23y F34x F34y F35x F35y F36x F36y F
 
 %% 主程式
 for i = 1:360
-    fprintf("th2 =  %g deg\n",i);
+    % fprintf("th2 =  %g deg\n",i);
     FPSol = Inis(i,:).'; % 從Excel讀取R1, th3, th4, th5從初始到結束的每一數值，並使用.'將行向量轉換為列向量 => FPSol 結構：[R1; th3; th4; th5] - 4×1向量)
 
     Unk = FV; 

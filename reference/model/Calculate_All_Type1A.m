@@ -32,18 +32,11 @@ Inis = [Inis(:,1)*1e-3,Inis(:,2:4)*dtr];
 %%
 R2 = Dims(2)*1e-3;
 R3 = Dims(3)*1e-3;
-R3a = Dims(4)*1e-3;
-th3a = Dims(5)*dtr;
-R4 = Dims(6)*1e-3;
-R4a = Dims(7)*1e-3;
-th4a = Dims(8)*dtr;
-R5 = Dims(9)*1e-3;
-R5a = Dims(10)*1e-3;
-th5a = Dims(11)*dtr;
-R6 = Dims(12)*1e-3;
-th6 = Dims(13)*dtr;
-R7 = Dims(14)*1e-3;
-R8 = Dims(15)*1e-3;
+R4 = Dims(4)*1e-3;
+R5 = Dims(5)*1e-3;
+R7 = Dims(6)*1e-3;
+R8 = Dims(7)*1e-3;
+th6 = 0;
 %%
 m_mat = num2cell(BOMs(:,2));
 b_mat = num2cell(BOMs(:,8)*1e-3);
@@ -182,20 +175,21 @@ KCGV = [ffG22x;ffG22y;ffG32x;ffG32y;ffG42x;ffG42y;ffG52x;ffG52y;ffG62x;ffG62y;];
 KCGA = [ffG22xd;ffG22yd;ffG32xd;ffG32yd;ffG42xd;ffG42yd;ffG52xd;ffG52yd;ffG62xd;ffG62yd;];
 PEq = [AR2;AR3;AR4;AR5;AR6;Amo;BR2;BR3;BR4;BR5;BR6;Bmo;SigmaA;SigmaB];
 %%
-FPVA_matrix = zeros(360,12);
-GPVA_matrix = zeros(360,30);
-KCFVA_matrix = zeros(360,8);
-KCGVA_matrix = zeros(360,20);
-FM_matrix = zeros(360,22);
-SK_matrix = zeros(360,3);
-MA_matrix = zeros(360,1);
-PEq_matrix = zeros(360,14);
+FPVA_matrix = zeros(420,12);
+GPVA_matrix = zeros(420,30);
+KCFVA_matrix = zeros(420,8);
+KCGVA_matrix = zeros(420,20);
+FM_matrix = zeros(420,22);
+SK_matrix = zeros(420,3);
+MA_matrix = zeros(420,1);
+PEq_matrix = zeros(420,14);
 %%
 FMVal = [F12x F12y F14x F14y F16x F16y F23x F23y F34x F34y F35x F35y F36x F36y F45x F45y F56x F56y FPress M12 M14 M16];
 %%
-for i=1:360
-    fprintf("th2= %g deg\n",i);
-
+for i=1:420
+    if mod(i,10)==0
+        fprintf("th2= %g deg\n",i);
+    end
 %     Unk = FP;
 %     Unk = subs(Unk,th2,i*dtr);
 %     Unk = vpa(Unk);
@@ -206,15 +200,15 @@ for i=1:360
 
     Unk = FV;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = vpa(Unk);
-    [UnkL,UnkR] = equationsToMatrix(Unk,[R1d,th3d,th4d,th5d]);
-    FVSol = UnkL\UnkR;
+    [UnkL,UnkR] = equationsToMatrix(Unk,[R1d,th3d,th4d,th5d]); % 將Unk轉換成矩陣形式，並按照指定的未知數 [R1d,th3d,th4d,th5d]，重組成標準的矩陣形式UnkL * [R1d,th3d,th4d,th5d] = UnkR
+    FVSol = UnkL\UnkR; % 解線性方程組 UnkL * FVSol = UnkR
 
     Unk = FA;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,th2dd,0);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
@@ -230,7 +224,7 @@ for i=1:360
 
     Unk = vG;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
     Unk = vpa(Unk);
@@ -238,7 +232,7 @@ for i=1:360
 
     Unk = aG;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,th2dd,0);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
@@ -248,7 +242,7 @@ for i=1:360
 
     Unk = KCFV;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = vpa(Unk);
     [UnkL,UnkR] = equationsToMatrix(Unk,[ff12,hh32,hh42,hh52]);
@@ -256,7 +250,7 @@ for i=1:360
 
     Unk = KCFA;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,th2dd,0);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
@@ -267,7 +261,7 @@ for i=1:360
 
     Unk = KCGV;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
     Unk = subs(Unk,[ff12,hh32,hh42,hh52],KCFVSol.');
@@ -276,7 +270,7 @@ for i=1:360
 
     Unk = KCGA;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,th2dd,0);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
@@ -288,7 +282,7 @@ for i=1:360
 
     Unk = FM;
     Unk = subs(Unk,th2,i*dtr);
-    Unk = subs(Unk,th2d,-420*dtr);
+    Unk = subs(Unk,th2d,420*dtr);
     Unk = subs(Unk,th2dd,0);
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.');
     Unk = subs(Unk,[R1d,th3d,th4d,th5d],FVSol.');
@@ -323,8 +317,10 @@ for i=1:360
 end
 %%
 [R1Max,th2Max] = max(FPVA_matrix(:,1));
-[R1Min,th2Min] = min(FPVA_matrix(:,1));
-th2Min = th2Min - 360;
+[R1Min,th2Min] = min(FPVA_matrix(:,1)); % 回傳數值及索引值(對應角度)
+if th2Min > 360
+    th2Min = th2Min - 360;
+end
 R1TotalStroke = R1Max - R1Min;
 th2TotalStroke = th2Max - th2Min;
 fprintf("Maximum R1= %.6g mm at th2= %.6g deg\n",R1Max,th2Max);

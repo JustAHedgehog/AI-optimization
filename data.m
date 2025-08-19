@@ -8,8 +8,6 @@ import CrossXY.*
 %% 設定初始參數
 syms R1 th2 th3 th4 th5
 syms v1 omega3 omega4 omega5 % v1(滑塊速度), omega3~omega5(各桿角速度)
-n2 = 70; % 馬達轉速
-omega2 = -n2 * 2*pi/60;
 syms a1 alpha2 alpha3 alpha4 alpha5 % a1(滑塊加速度), alpha2~alpha5(各桿角加速度)
 assume(R1,'real');
 assume(th3,'real');
@@ -33,6 +31,8 @@ IniFileName = TypeName + " 初始位置表.xlsx";
 ResultFileName = TypeName + " 計算結果表.xlsx";
 rad = pi/180;
 g = 9.81;
+n2 = 70; % 馬達轉速
+omega2 = -n2*2*pi/60;
 
 BOMs = readmatrix(BOMFileName,'Range','A3'); % 材料清單(質量、慣性矩)
 Dims = readmatrix(DimFileName,'Range','B1:B15'); % 桿長參數
@@ -165,7 +165,6 @@ FMVal = [F12x F12y F14x F14y F16x F16y F23x F23y F34x F34y F35x F35y F36x F36y F
 
 %% 主程式
 for i = 1:360
-    % fprintf("th2 =  %g deg\n",i);
     FPSol = Inis(i,:).'; % 從Excel讀取R1, th3, th4, th5從初始到結束的每一數值，並使用.'將行向量轉換為列向量 => FPSol 結構：[R1; th3; th4; th5] - 4×1向量)
 
     Unk = FV; 
@@ -173,7 +172,7 @@ for i = 1:360
     Unk = subs(Unk,[R1,th3,th4,th5],FPSol.'); % 代入[R1; th3; th4; th5]數值進函數中
     Unk = vpa(Unk);
     [UnkL,UnkR] = equationsToMatrix(Unk,[v1,omega3,omega4,omega5]);
-    FVSol = UnkL\UnkR; % 解線性方程組
+    FVSol = UnkL\UnkR; % 解線性方程組 UnkL * FVSol = UnkR
 
     Unk = FA;
     Unk = subs(Unk,th2,i*rad);

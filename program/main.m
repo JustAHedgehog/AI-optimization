@@ -35,7 +35,7 @@ disp('符號模型定義完成。');
 %% 3. 執行模擬迴圈
 disp('Step 3: 正在執行模擬迴圈...');
 % 傳入模型和參數，返回計算結果
-results = Copy_of_simulation(model, params);
+results = simulation(model, params);
 disp('模擬計算完成。');
 
 %% 4. 分析與儲存結果
@@ -44,5 +44,3 @@ analyze(results, fileInfo);
 
 %% 完成
 disp(TypeName + " 全部計算已完成！");
-beep on;
-beep;

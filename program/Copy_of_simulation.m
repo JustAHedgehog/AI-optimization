@@ -1,4 +1,4 @@
-function results = Copy_of_simulation(model, params)
+function results = simulation(model, params)
     % SIMULATION - 執行主迴圈，計算每個角度的運動學與動力學
     % 輸入: model - 包含符號方程式的結構體
     %       params - 包含物理參數的結構體
@@ -36,7 +36,7 @@ function results = Copy_of_simulation(model, params)
     branch1_reaches_toggle = any(th5_branch1 >= toggle_range_rad(1) & th5_branch1 <= toggle_range_rad(2));
     branch2_reaches_toggle = any(th5_branch2 >= toggle_range_rad(1) & th5_branch2 <= toggle_range_rad(2));
     
-     % 根據檢查結果設定使用的分支
+    % 根據檢查結果設定使用的分支
     if branch1_reaches_toggle && ~branch2_reaches_toggle
         chosen_branch = 1;
         disp('決策：採用分支 1。');

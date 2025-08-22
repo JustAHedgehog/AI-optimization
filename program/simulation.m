@@ -6,23 +6,67 @@ function results = simulation(model, params)
 
     %% 初始化結果儲存矩陣
     num_steps = 420;
-    results.FPVA_matrix = zeros(num_steps, 12);
-    results.GPVA_matrix = zeros(num_steps, 30);
-    results.FM_matrix = zeros(num_steps, 22);
-    results.SK_matrix = zeros(num_steps, 3);
     
+    %% =================================================================
+    %  步驟 1: 預掃描以決定正確的運動學分支 (Assembly Mode)
+    %  =================================================================
+    disp('正在進行預掃描以決定機構組態...');
     % 從 model 和 params 中提取常用變數，增加可讀性
     sym_pos = model.sym_pos;
     sym_vel = model.sym_vel;
     sym_acc = model.sym_acc;
     rad = params.rad;
-    candidate_1 = 0;
-    candidate_2 = 0;
+    toggle_range_rad = [175, 195] * rad; % 肘節效應的目標區間
+
     %% 主迴圈
     for i = 1:num_steps
         th2_val = i*rad;
-        [FPSol, candidate_1, candidate_2] = solve_position(th2_val, params, candidate_1, candidate_2);
-
+        [FPSol_1, FPSol_2] = solve_kinematic_branches(th2_val, params);
+        if ~any(isnan(FPSol_1))
+            th5_branch1(i) = FPSol_1(4); % 提取 th5
+        else
+            th5_branch1(i) = NaN;
+        end
+        if ~any(isnan(FPSol_2))
+            th5_branch2(i) = FPSol_2(4); % 提取 th5
+        else
+            th5_branch2(i) = NaN;
+        end
+    end
+    branch1_reaches_toggle = any(th5_branch1 >= toggle_range_rad(1) & th5_branch1 <= toggle_range_rad(2));
+    branch2_reaches_toggle = any(th5_branch2 >= toggle_range_rad(1) & th5_branch2 <= toggle_range_rad(2));
+    
+     % 根據檢查結果設定使用的分支
+    if branch1_reaches_toggle && ~branch2_reaches_toggle
+        chosen_branch = 1;
+        disp('決策：採用分支 1。');
+    elseif ~branch1_reaches_toggle && branch2_reaches_toggle
+        chosen_branch = 2;
+        disp('決策：採用分支 2。');
+    elseif ~branch1_reaches_toggle && ~branch2_reaches_toggle
+        error('機構設計錯誤：兩個運動學分支都無法達到指定的肘節區間。');
+    else
+        error('機構組態不明確：兩個運動學分支都能達到肘節區間，請檢查機構設計。');
+    end
+    %% =================================================================
+    %  步驟 2: 執行完整動力學模擬的主迴圈
+    %  =================================================================
+    
+    % 初始化結果儲存矩陣 (這部分不變)
+    results.FPVA_matrix = zeros(num_steps, 12);
+    results.GPVA_matrix = zeros(num_steps, 30);
+    results.FM_matrix = zeros(num_steps, 22);
+    results.SK_matrix = zeros(num_steps, 3);
+    % 主迴圈
+    for i = 1:num_steps
+        th2_val = i * rad;
+        % --- 根據預掃描的結果，選擇正確的 FPSol ---
+        [FPSol_1, FPSol_2] = solve_kinematic_branches(th2_val, params);
+        if chosen_branch == 1
+            FPSol = FPSol_1;
+        else
+            FPSol = FPSol_2;
+        end
         % 速度分析
         Unk_V = subs(model.FV, 'th2', th2_val); % subs(表達式, 舊變數, 新值) - i代入函數
         Unk_V = subs(Unk_V, sym_pos.', FPSol.'); % 代入[R1; th3; th4; th5]數值進函數中
@@ -60,46 +104,49 @@ function results = simulation(model, params)
             fprintf('進度: %d / %d\n', i, num_steps);
         end
     end
-    fprintf("th4_2 跌代次數： %f\n", candidate_2);
-    fprintf("th4_1 跌代次數： %f\n", candidate_1);
 end
 
-function [FPSol, candidate_1, candidate_2] = solve_position(th2_val, params, candidate_1, candidate_2)
+% --- 檔案: solve_kinematic_branches.m ---
+function [FPSol_1, FPSol_2] = solve_kinematic_branches(th2_val, params)
+    % SOLVE_KINEMATIC_BRANCHES - 計算給定 th2 下的兩個可能的機構組態解
+
+    % 從 params 結構體中提取需要的桿長
     R2 = params.R2; R3 = params.R3; R4 = params.R4;
     R5 = params.R5; R7 = params.R7; R8 = params.R8;
+
+    % --- 解出 th4 的兩個候選解 ---
     A = R2*cos(th2_val) - R7;
     B = R2*sin(th2_val) + R8;
-    a = A^2 + B^2 + R4^2 - R3^2 + 2*R4*A;
-    b = -4*R4*B;
-    c = A^2 + B^2 + R4^2 - R3^2 - 2*R4*A;
+    
+    a = A^2 + B^2 + R4^2 - R3^2 + 2*A*R4;
+    b = -4*B*R4;
+    c = A^2 + B^2 + R4^2 - R3^2 - 2*A*R4;
+    
     discriminant = b^2 - 4*a*c;
     if discriminant < 0
         error('無實數解！機構在 th2 = %f rad 時無法達到此構型。', th2_val);
     end
+    
     t1 = (-b + sqrt(discriminant)) / (2*a);
     t2 = (-b - sqrt(discriminant)) / (2*a);
     
     th4_1 = 2*atan(t1);
     th4_2 = 2*atan(t2);
 
-    % 因機構緣故，th4 僅能在第1 (0 ~ pi/2) 或 第4 (3pi/2 ~ 2pi 或 -pi/2 ~ 0) 象限，而 atan 函數的返回值範圍是 (-pi/2, pi/2)
-    if (th4_2 >= -pi/2 && th4_2 <= pi/2) % 第一象限或第四象限
-        th4 = th4_2;
-        candidate_2 = candidate_2 + 1;
-    else % 檢查另一個候選解
-        if (th4_1 >= -pi/2 && th4_1 <= pi/2)
-            th4 = th4_1;
-            candidate_1 = candidate_1 + 1;
-        else
-            error('在 th2 = %f rad 時，找不到符合 th4 象限限制的解。', th2_val);
-        end
-    end
-    th5 = pi - asin(R4*sin(th4)/R5);
-    numerator_th3_y = B - R4*sin(th4);
-    numerator_th3_x = A - R4*cos(th4);
-    th3 = atan2(numerator_th3_y, numerator_th3_x);
-    
-    % 因為 cos(th5) 必須為負 (第2、3象限)，所以 R1 的公式中取減號
-    R1 = R4*cos(th4) + sqrt(R5^2 - (R4*sin(th4))^2);
-    FPSol = [R1; th3; th4; th5];
+    % --- 分別計算兩個分支的完整解 ---
+    % 分支 1
+    th5_1 = pi - asin(R4*sin(th4_1)/R5);
+    numerator_th3_y = B - R4*sin(th4_1);
+    numerator_th3_x = A - R4*cos(th4_1);
+    th3_1 = atan2(numerator_th3_y, numerator_th3_x);
+    R1_1 = R4*cos(th4_1) - R5*cos(th5_1);
+    FPSol_1 = [R1_1; th3_1; th4_1; th5_1];
+
+    % 分支 2
+    th5_2 = pi - asin(R4*sin(th4_2)/R5);
+    numerator_th3_y = B - R4*sin(th4_2);
+    numerator_th3_x = A - R4*cos(th4_2);
+    th3_2 = atan2(numerator_th3_y, numerator_th3_x);
+    R1_2 = R4*cos(th4_2) - R5*cos(th5_2);
+    FPSol_2 = [R1_2; th3_2; th4_2; th5_2];
 end

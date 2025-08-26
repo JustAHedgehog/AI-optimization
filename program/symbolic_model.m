@@ -7,11 +7,13 @@ function model = symbolic_model(params)
     syms R1 th2 th3 th4 th5
     syms v1 omega3 omega4 omega5
     syms a1 alpha3 alpha4 alpha5
-    
+    syms a_G2x a_G3x a_G4x a_G5x a_G6x
+    syms a_G2y a_G3y a_G4y a_G5y a_G6y
     % 將符號變數存入 model 結構體中
     model.sym_pos = [R1; th3; th4; th5];
     model.sym_vel = [v1; omega3; omega4; omega5];
     model.sym_acc = [a1; alpha3; alpha4; alpha5];
+    model.sym_aG = [a_G2x a_G2y a_G3x a_G3y a_G4x a_G4y a_G5x a_G5y a_G6x a_G6y];
     
     assume(R1,'real');
     assume([th3 th4 th5],'real');

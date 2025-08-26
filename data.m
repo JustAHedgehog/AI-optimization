@@ -32,7 +32,7 @@ ResultFileName = TypeName + " 計算結果表.xlsx";
 rad = pi/180;
 g = 9.81;
 n2 = 70; % 馬達轉速
-omega2 = -n2*2*pi/60;
+omega2 = n2*2*pi/60;
 
 BOMs = readmatrix(BOMFileName,'Range','A3'); % 材料清單(質量、慣性矩)
 Dims = readmatrix(DimFileName,'Range','B1:B15'); % 桿長參數
@@ -227,6 +227,9 @@ for i = 1:360
     GPVA_matrix(i,:) = [r_GSol;v_GSol;a_GSol;].';
     FM_matrix(i,:) = FMSol.';
     SK_matrix(i,:) = SKSol.';
+    if mod(i, 30) == 0
+            fprintf('進度: %d / %d\n', i, num_steps);
+    end
 end
 %% 結果分析
 [R1Max,th2Max] = max(FPVA_matrix(:,1));

@@ -16,7 +16,7 @@ disp('準備完成。');
 % --- 執行被測試的函數 ---
 % *** 請確認已將 run_simulation_loop.m 中的迴圈改成 1:5 ***
 disp('正在測試 simulation.m ...');
-results = Copy_of_simulation(model, params);
+results = simulation(model, params);
 
 % --- 驗證結果 ---
 if exist('results', 'var')

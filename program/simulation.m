@@ -15,6 +15,7 @@ function results = simulation(model, params)
     sym_pos = model.sym_pos;
     sym_vel = model.sym_vel;
     sym_acc = model.sym_acc;
+    sym_aG = model.sym_aG;
     rad = params.rad;
     toggle_range_rad = [175, 195] * rad; % 肘節效應的目標區間
 
@@ -36,7 +37,7 @@ function results = simulation(model, params)
     branch1_reaches_toggle = any(th5_branch1 >= toggle_range_rad(1) & th5_branch1 <= toggle_range_rad(2));
     branch2_reaches_toggle = any(th5_branch2 >= toggle_range_rad(1) & th5_branch2 <= toggle_range_rad(2));
     
-     % 根據檢查結果設定使用的分支
+    % 根據檢查結果設定使用的分支
     if branch1_reaches_toggle && ~branch2_reaches_toggle
         chosen_branch = 1;
         disp('決策：採用分支 1。');
@@ -57,6 +58,7 @@ function results = simulation(model, params)
     results.GPVA_matrix = zeros(num_steps, 30);
     results.FM_matrix = zeros(num_steps, 22);
     results.SK_matrix = zeros(num_steps, 3);
+    results.MA_matrix = zeros(num_steps,1);
     % 主迴圈
     for i = 1:num_steps
         th2_val = i * rad;
@@ -94,11 +96,25 @@ function results = simulation(model, params)
         Unk_aG = subs(Unk_aG, sym_vel.', FVSol.');
         Unk_aG = subs(Unk_aG, sym_acc.', FASol.');
         a_GSol = vpa(Unk_aG);
+
+        Unk_FM = subs(model.FM, 'th2', th2_val);
+        Unk_FM = subs(Unk_FM, sym_pos.', FPSol.');
+        Unk_FM = subs(Unk_FM, sym_vel.', FVSol.');
+        Unk_FM = subs(Unk_FM, sym_acc.', FASol.');
+        Unk_FM = subs(Unk_FM, sym_aG, a_GSol.');
+        [UnkL_FM, UnkR_FM] = equationsToMatrix(vpa(Unk_FM), model.FMVal); % 將Unk轉換成矩陣形式，並按照指定的未知數 [R1d,th3d,th4d,th5d]，重組成標準的矩陣形式UnkL * [R1d,th3d,th4d,th5d] = UnkR
+        FMSol = UnkL_FM \ UnkR_FM; % 解線性方程組 UnkL * FVSol = UnkR
+        
+        Unk_SK = subs(model.SK, model.FMVal, FMSol.');
+        Unk_SK = subs(Unk_SK, sym_pos.', FPSol.');
+        [UnkL_SK,UnkR_SK] = equationsToMatrix(vpa(Unk_SK), model.SKVal);
+        SKSol = UnkL_SK\UnkR_SK;
+
         % 儲存當前步驟的結果
         results.FPVA_matrix(i,:) = [FPSol; FVSol; FASol].';
         results.GPVA_matrix(i,:) = [r_GSol; v_GSol; a_GSol].';
-        % results.FM_matrix(i,:) = FMSol.';
-        % results.SK_matrix(i,:) = SKSol.';
+        results.FM_matrix(i,:) = FMSol.';
+        results.SK_matrix(i,:) = SKSol.';
         
         if mod(i, 30) == 0
             fprintf('進度: %d / %d\n', i, num_steps);

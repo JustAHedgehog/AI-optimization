@@ -7,7 +7,6 @@ function [params, fileInfo] = mechanism_env(TypeName)
     %% 檔案名稱
     fileInfo.BOMFileName = TypeName + " 總組合 組合1 BOM表.xlsx";
     fileInfo.DimFileName = TypeName + " 尺寸表.xlsx";
-    fileInfo.IniFileName = TypeName + " 初始位置表.xlsx";
     fileInfo.ResultFileName = TypeName + " 計算結果表.xlsx";
 
     %% 常數
@@ -20,8 +19,6 @@ function [params, fileInfo] = mechanism_env(TypeName)
     %% 讀取資料
     BOMs = readmatrix(fileInfo.BOMFileName,'Range','A3');
     Dims = readmatrix(fileInfo.DimFileName,'Range','B1:B15');
-    params.Inis = readmatrix(fileInfo.IniFileName,'Range','A1');
-    params.Inis = [params.Inis(:,1)*1e-3, params.Inis(:,2:4)*params.rad];
 
     %% 桿件設計參數 (單位: m)
     params.R2 = Dims(2)*1e-3;

@@ -86,6 +86,7 @@ function results = simulation(model, params)
         Unk_rG = subs(model.r_G, 'th2', th2_val);
         Unk_rG = subs(Unk_rG, sym_pos.', FPSol.');
         r_GSol = vpa(Unk_rG);
+        
         Unk_vG = subs(model.v_G, 'th2', th2_val);
         Unk_vG = subs(Unk_vG, sym_pos.', FPSol.');
         Unk_vG = subs(Unk_vG, sym_vel.', FVSol.');

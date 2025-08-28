@@ -164,7 +164,7 @@ MA_matrix = zeros(360,1);
 FMVal = [F12x F12y F14x F14y F16x F16y F23x F23y F34x F34y F35x F35y F36x F36y F45x F45y F56x F56y FPress M12 M14 M16];
 
 %% 主程式
-for i = 1:360
+for i = 1:420
     FPSol = Inis(i,:).'; % 從Excel讀取R1, th3, th4, th5從初始到結束的每一數值，並使用.'將行向量轉換為列向量 => FPSol 結構：[R1; th3; th4; th5] - 4×1向量)
 
     Unk = FV; 
@@ -228,7 +228,7 @@ for i = 1:360
     FM_matrix(i,:) = FMSol.';
     SK_matrix(i,:) = SKSol.';
     if mod(i, 30) == 0
-            fprintf('進度: %d / %d\n', i, num_steps);
+            fprintf('進度: %d / %d\n', i, 420);
     end
 end
 %% 結果分析
